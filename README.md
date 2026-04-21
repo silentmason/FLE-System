@@ -1,6 +1,6 @@
-# 📘 Ferneon Logic Engine (FLE)
+# 🧭 Ferneon Logic Engine (FLE) — Overview
 
-The **Ferneon Logic Engine (FLE)** is the scripting system that powers all interactive content inside **Ferneon**.  
+The **Ferneon Logic Engine (FLE)** is the core scripting system that powers all interactive content inside **Ferneon**.  
 It is designed to be:
 
 - Safe  
@@ -8,8 +8,16 @@ It is designed to be:
 - Multiplayer‑friendly  
 - Creator‑accessible  
 - Extensible  
+- Engine‑agnostic (but currently implemented in Unity)  
 
-FLE is divided into six major components:
+FLE allows creators to build gameplay logic, interactions, tools, and systems without writing unsafe or engine‑level code.  
+It is the foundation for Ferneon’s creator ecosystem.
+
+---
+
+# 🧩 The FLE Ecosystem
+
+FLE is composed of six major subsystems, each with a clear purpose:
 
 | Acronym | Name | Purpose |
 |--------|------|---------|
@@ -20,34 +28,40 @@ FLE is divided into six major components:
 | **FLEA** | Ferneon Logic Engine API | Safe engine functions exposed to scripts |
 | **FLEN** | Ferneon Logic Engine Nodes | Visual scripting nodes used in the editor |
 
----
-
-## 🧠 FLES — The Scripting Language
-
-Creators write gameplay logic using **FLES**, a safe, sandboxed scripting language.
-
-FLES can be:
-
-- Visual (FLEN nodes)  
-- Text‑based (optional)  
-- Hybrid  
-
-FLES scripts **cannot** access Unity, C#, files, networking, or unsafe operations.  
-They can only call **FLEA API functions**.
-
-### Example (conceptual)
-
-```
-OnInteract:
-    PlaySound("DoorOpen")
-    SetVariable("IsOpen", true)
-```
+Each layer builds on the one below it, forming a complete pipeline from creator‑authored logic to runtime execution.
 
 ---
 
-## ⚙️ FLEB — Bytecode Format
+# 🧠 FLES — The Scripting Language
 
-When a creator saves a FLES script, it is compiled into **FLEB bytecode**.
+FLES is the language creators use to define gameplay logic.  
+It can be authored through:
+
+- Visual scripting (FLEN)  
+- Text scripting (optional)  
+- Hybrid workflows  
+
+FLES is intentionally:
+
+- Simple  
+- Safe  
+- Deterministic  
+- Sandbox‑restricted  
+
+Creators cannot access Unity, C#, the filesystem, networking, or unsafe operations.  
+They can only call approved **FLEA API functions**.
+
+---
+
+# ⚙️ FLEB — Bytecode Format
+
+FLES scripts compile into **FLEB**, a compact bytecode format optimized for:
+
+- Fast execution  
+- Deterministic behavior  
+- Network replication  
+- Security  
+- Low memory usage  
 
 FLEB contains:
 
@@ -55,220 +69,120 @@ FLEB contains:
 - Constants table  
 - Variable table  
 - Event entry points  
+- Optional debug metadata  
 
-### Example (conceptual)
-
-```
-PUSH_CONST 0        ; "DoorOpen"
-CALL_API 1, 1       ; PlaySound
-PUSH_CONST 1        ; true
-STORE_VAR 0         ; IsOpen
-RETURN
-```
+This is the format executed by the runtime.
 
 ---
 
-## 🖥️ FLER — Runtime Execution
+# 🖥️ FLER — Runtime Execution
 
-The **FLER Runtime** is the virtual machine that executes FLEB bytecode.
+The **FLER Runtime** is a lightweight virtual machine that executes FLEB bytecode.  
+It is responsible for:
 
-FLER is:
+- Stack operations  
+- Variable access  
+- Control flow  
+- Event dispatch  
+- API calls  
+- Script lifecycle management  
 
-- Deterministic  
-- Sandbox‑safe  
+FLER is designed to be:
+
+- Fast  
+- Predictable  
 - Server‑authoritative  
-- Event‑driven  
-- Lightweight  
-
-FLER consists of:
-
-- `FLESProgramInstance` — runtime state  
-- `FLERContext` — manages all instances  
-- `FLERInterpreter` — executes bytecode  
+- Easy to embed in Unity  
 
 ---
 
-## 🧱 FLEA — Safe API Functions
+# 🧱 FLEA — Safe API Layer
 
-Scripts interact with the world through **FLEA**, the safe API registry.
+FLEA exposes safe engine functions to scripts, such as:
 
-Examples:
+- Playing sounds  
+- Moving objects  
+- Spawning entities  
+- Sending events  
+- Reading player data  
+- Accessing world state  
 
-- `PlaySound(soundId)`  
-- `SpawnObject(prefabId)`  
-- `MoveTo(position)`  
-- `SendEvent(eventName)`  
-- `GetPlayerPosition(playerId)`  
+FLEA ensures:
 
-Creators never call Unity or C# directly — only FLEA.
+- No unsafe operations  
+- No direct Unity access  
+- No arbitrary C# execution  
+- Full sandboxing  
+
+Developers can register new APIs to extend the engine.
 
 ---
 
-## 🧩 FLEN — Visual Scripting Nodes
+# 🧩 FLEN — Visual Scripting Nodes
 
-FLEN is the visual scripting layer.
+FLEN is the visual scripting layer used by creators inside Ferneon.  
+Each node corresponds to:
 
-Each FLEA API function becomes a node:
-
-```
-[Play Sound]
-Inputs: soundId
-```
-
-Each event becomes a node:
-
-```
-[On Interact]
-```
-
-Each variable becomes a node:
-
-```
-[Get Variable]
-[Set Variable]
-```
+- A FLES instruction  
+- A FLEA API call  
+- A variable operation  
+- A control flow structure  
+- An event entry point  
 
 FLEN compiles into FLES → FLEB → FLER.
 
 ---
 
-# 📦 Runtime Architecture
+# 🔄 Script Lifecycle
 
-Below is a clear explanation of each runtime script included in the engine.
+A script goes through the following pipeline:
 
----
-
-## 📄 FLESProgram.cs
-
-Stores compiled script data.
-
-Contains:
-
-- Bytecode  
-- Constants  
-- Variable table  
-- Event table  
-- Program ID  
-- Debug info  
-
-This is a **data container**, not logic.
-
----
-
-## 📄 FLESProgramInstance.cs
-
-Represents a running script attached to an entity.
-
-Contains:
-
-- Reference to FLESProgram  
-- Runtime variable array  
-- Stack  
-- Instruction pointer  
-- Entity ID  
-- Enabled flag  
-
-This is the **runtime state** of a script.
-
----
-
-## 📄 FLERContext.cs
-
-Manages all running scripts in a world.
-
-Responsibilities:
-
-- Add/remove script instances  
-- Fire events (OnStart, OnUpdate, etc.)  
-- Run scripts through FLERInterpreter  
-
-This is the **script manager**.
-
----
-
-## 📄 FLEAApiRegistry.cs
-
-Stores safe API functions.
-
-Responsibilities:
-
-- Register API handlers  
-- Look up API handlers by ID  
-- Enforce sandboxing  
-
-This is the **bridge** between scripts and the engine.
-
----
-
-## 📄 FLERInterpreter.cs
-
-Executes bytecode.
-
-Responsibilities:
-
-- Stack operations  
-- Variable operations  
-- Control flow  
-- API calls  
-- Event execution  
-
-This is the **virtual CPU** of FLE.
-
----
-
-## 📄 FLESEventType.cs
-
-Defines all script events.
-
-Examples:
-
-- OnStart  
-- OnUpdate  
-- OnInteract  
-- OnTriggerEnter  
-- OnDamage  
-
-This is the **event system**.
-
----
-
-# 🧪 Script Lifecycle
-
-1. Creator builds logic in FLEN  
-2. FLEN compiles into FLES  
-3. FLES compiles into FLEB  
-4. FLEB loads into a FLESProgram  
-5. FLERContext creates a FLESProgramInstance  
-6. Unity triggers an event  
+1. Creator builds logic in FLEN (visual nodes)  
+2. FLEN compiles into FLES (script format)  
+3. FLES compiles into FLEB (bytecode)  
+4. FLEB is loaded into a `FLESProgram`  
+5. A `FLESProgramInstance` is created for an entity  
+6. Unity triggers events (OnStart, OnUpdate, etc.)  
 7. FLERInterpreter executes the script  
 8. Script calls FLEA API functions  
 9. Engine performs the action safely  
 
----
-
-# 📚 Creator Summary
-
-Creators only need to learn:
-
-- Events  
-- Variables  
-- API functions  
-- Visual nodes  
-
-They never touch bytecode or the runtime.
+This pipeline ensures safety, determinism, and performance.
 
 ---
 
-# 🛠️ Developer Summary
+# 🎯 Design Goals
 
-Engine developers work with:
+FLE is built around several core principles:
 
-- `FLESProgram`  
-- `FLESProgramInstance`  
-- `FLERInterpreter`  
-- `FLERContext`  
-- `FLEAApiRegistry`  
-- `Instruction.cs`  
+### **1. Safety**
+Scripts cannot crash the engine or access unsafe systems.
 
-This is the full runtime architecture.
+### **2. Determinism**
+Scripts behave the same on all clients and servers.
 
+### **3. Extensibility**
+Developers can add new APIs, nodes, and systems.
+
+### **4. Creator Accessibility**
+Non‑programmers can build complex logic visually.
+
+### **5. Engine Independence**
+The runtime is portable and not tied to Unity internals.
+
+---
+
+# 📦 What’s Next?
+
+The following documents provide deeper detail:
+
+- **1_FLES_Language.md** — How the scripting language works  
+- **2_FLEB_Bytecode.md** — Bytecode format and opcodes  
+- **3_FLER_Runtime.md** — Runtime architecture  
+- **4_FLEA_API.md** — API reference  
+- **5_FLEN_Visual_Nodes.md** — Visual scripting system  
+- **6_Unity_Integration.md** — How to use FLE inside Unity  
+- **7_Hello_World_Tutorial.md** — First script tutorial  
+- **8_Advanced_Examples.md** — More complex examples  
+
+This overview provides the high‑level understanding needed before diving into the details.
