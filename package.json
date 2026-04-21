@@ -1,0 +1,11 @@
+{
+  "name": "com.ferneon.fle",
+  "version": "1.0.0",
+  "displayName": "Ferneon Logic Engine",
+  "description": "The FLE scripting system for Ferneon.",
+  "unity": "2022.3.22f1",
+  "author": {
+    "name": "TellsFox",
+    "url": "https://github.com/silentmason/FLE-System"
+  }
+}
